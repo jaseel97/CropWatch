@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Homepage</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+    }
+
+    #side-nav {
+      width: 200px;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+
+    #heatmap-container {
+      flex: 1;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    #heatmap {
+      max-width: 80%;
+      border: 1px solid #ccc;
+      background-image: url("https://i.stack.imgur.com/r2G2V.png");
+      background-size: cover;
+    }
+
+    #employee-info {
+      position: absolute;
+      display: none;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 5px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .menu-item {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      transition: background-color 0.3s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .menu-item:hover {
+      background-color: #ddd;
+    }
+
+    .menu-link {
+      color: #333;
+      text-decoration: none;
+      font-size: 16px;
+    }
+
+    .menu-link:hover {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    /* Added styles for active menu item */
+    .active {
+      background-color: #7c9cf1;
+      color: #fff;
+    }
+
+    .arrow {
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+      /* Initially hide arrow */
+      color: #7c9cf1;
+      /* Arrow color */
+    }
+
+    .menu-item.active .arrow {
+      display: block;
+      /* Show arrow for active item */
+    }
+  </style>
+</head>
+
+<body>
+  <div id="side-nav">
+    <div class="menu-item active" id="employee-tracking">
+      <span class="menu-link">Employee Tracking Location</span>
+      <span class="arrow">&#9658;</span>
+      <!-- Unicode arrow icon -->
+    </div>
+    <div class="menu-item" id="crop-tracking">
+      <span class="menu-link">Crop Health Tracking</span>
+      <span class="arrow">&#9658;</span>
+      <!-- Unicode arrow icon -->
+    </div>
+  </div>
+  <div id="heatmap-container">
+    <canvas id="heatmap" width="600" height="400"></canvas>
+    <div id="employee-info"></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("heatmap");
+    const ctx = canvas.getContext("2d");
+    const employeeInfo = document.getElementById("employee-info");
+    const gridSize = 50;
+    const cellWidth = canvas.width / gridSize;
+    const cellHeight = canvas.height / gridSize;
+    let employeeData = [];
+    let densityData = [];
+    let imageData = ctx.createImageData(canvas.width, canvas.height);
+    let animationActive = true; // Flag to control animation
+    let employeeInfoTimeout;
+    let intervalID; // To hold the interval ID for location update
+
+    // Fetch data from the API
+    async function fetchDataFromAPI() {
+      try {
+        const response = await fetch("http://localhost:5000/coordinates");
+        const data = await response.json();
+        // Convert the object structure into an array of coordinate objects
+        employeeData = Object.values(data).map(coord => ({ x: coord.x, y: coord.y }));
+        densityData = generateDensityData(employeeData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+
+    // Generate density data based on employee locations
+    function generateDensityData(employees) {
+      const data = new Array(gridSize).fill(0).map(() => new Array(gridSize).fill([]));
+      employees.forEach(({ x, y }, index) => {
+        const gridX = Math.floor(x / canvas.width * gridSize);
+        const gridY = Math.floor(y / canvas.height * gridSize);
+        data[gridY][gridX].push(index + 1); // Store employee indices in the grid cell
+      });
+      return data;
+    }
+
+    // Function to update the heatmap based on employee locations
+    function updateHeatmap() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      updateImageData();
+      drawEmployeeLocations();
+    }
+
+    // Draw employee locations on the canvas
+    function drawEmployeeLocations() {
+      employeeData.forEach(({ x, y }) => {
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = "rgb(255,0,0)";
+        ctx.fill();
+        ctx.closePath();
+      });
+    }
+
+    // Update the image data for the heatmap
+    function updateImageData() {
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
+          const intensity = densityData[y][x].length; // Get number of employees in the cell
+          const cellIndex = (y * gridSize + x) * 4;
+          const red = intensity * 25.5;
+          imageData.data[cellIndex] = red;
+          imageData.data[cellIndex + 1] = 0;
+          imageData.data[cellIndex + 2] = 0;
+          imageData.data[cellIndex + 3] = 255;
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    // Fetch data from the API and start updating the heatmap
+    fetchDataFromAPI().then(() => {
+      animate();
+      updateEmployeeLocationsRandomly();
+    });
+
+    // Remaining functions remain unchanged
+    function animate() {
+      updateHeatmap();
+      requestAnimationFrame(animate);
+    }
+
+    function handleMouseMove(event) {
+      if (!animationActive) return; // Skip hover if animation is paused
+
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const gridX = Math.floor(x / canvas.width * gridSize);
+      const gridY = Math.floor(y / canvas.height * gridSize);
+
+      const employeeIndices = densityData[gridY][gridX];
+      if (employeeIndices.length > 0) {
+        // Retrieve all employees associated with the hovered grid cell
+        const employeeNames = employeeIndices.map(index => employeeData[index - 1].name);
+        employeeInfo.textContent = employeeNames.join(", "); // Display multiple names if applicable
+
+        // Adjust offset and check for boundaries
+        const infoRect = employeeInfo.getBoundingClientRect();
+        let infoLeft = x + 10; // Adjust offset as needed
+        let infoTop = y + 10; // Adjust offset as needed
+
+        if (infoLeft + infoRect.width > window.innerWidth) {
+          infoLeft = x - infoRect.width - 10;
+        }
+        if (infoTop + infoRect.height > window.innerHeight) {
+          infoTop = y - infoRect.height - 10;
+        }
+
+        employeeInfo.style.left = `${infoLeft}px`;
+        employeeInfo.style.top = `${infoTop}px`;
+
+        // Add a slight delay to avoid flickering
+        clearTimeout(employeeInfoTimeout);
+        employeeInfoTimeout = setTimeout(() => {
+          employeeInfo.style.display = "block";
+        }, 100); // Adjust delay as needed
+      } else {
+        employeeInfo.style.display = "none";
+        clearTimeout(employeeInfoTimeout);
+      }
+    }
+
+    canvas.addEventListener("mousemove", handleMouseMove);
+
+
+  </script>
+</body>
+
+</html>
