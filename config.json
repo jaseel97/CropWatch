@@ -1,0 +1,1 @@
+{"mode": "test", "image_directory": "images", "jwt_key": "awejhkf123wa9248adh839", "map_width": 400, "map_height": 297, "min_lat": 0, "max_lat": 100, "min_lon": 0, "max_lon": 90, "max_temperature": 50, "min_temperature": 20, "min_moisture": 0.4, "max_moisture": 0.6, "temperature_spike": 10, "moisture_spike": 0.5}

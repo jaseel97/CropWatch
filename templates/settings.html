@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings</title>
+  <link href="../templates/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: Times New Roman, system-ui;
+      display: flex;
+    }
+    #side-nav {
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    #side-nav {
+            background-color: #f4f4f4;
+            padding: 20px;
+            width: 250px;
+        }
+        .container {
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            max-width: 100%;
+        }
+        .menu-item {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      transition: background-color 0.3s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .menu-item:hover {
+      background-color: #ddd;
+    }
+
+    .menu-link {
+      color: #333;
+      text-decoration: none;
+      font-size: 16px;
+    }
+
+    .menu-link:hover {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .active {
+      background-color: #7c9cf1;
+      color: #fff;
+    }
+
+    .arrow {
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+      color: #7c9cf1;
+    }
+
+    .menu-item.active .arrow {
+      display: block;
+    }
+    .mb-3 {
+        display: flex;
+        width: 50%;
+        align-items: baseline;
+    }
+.form-label {
+        width: 30%;
+    }
+    .error-message {
+    color: #333;
+    font-weight: 900;
+    margin-top: 10px;
+    font-size: 22px;
+}
+#warnings {
+      position: fixed;
+      bottom: 0px;
+      background-color:cadetblue;
+      color: #fff;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #warnings ul {
+     padding: 0;
+    }
+    #warnings li {
+      list-style-type: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="side-nav">
+    <div class="menu-item" id="employee-tracking" onclick="openMenuPage1()">
+        <span class="menu-link">Employee Location</span>
+        <span class="arrow">&#9658;</span>
+    </div>
+    <div class="menu-item" id="crop-tracking" onclick="openMenuPage2()">
+        <span class="menu-link">Crop Health Analysis</span>
+        <span class="arrow">&#9658;</span>
+    </div>
+    <div class="menu-item" id="historical-data" onclick="openMenuPage4()">
+        <span class="menu-link">Historical Data</span>
+        <span class="arrow">&#9658;</span>
+    </div>
+    <div class="menu-item" id="tracker-assignment" onclick="openMenuPage3()">
+        <span class="menu-link">Tracker Assignment</span>
+        <span class="arrow">&#9658;</span>
+    </div>
+    <div class="menu-item active" id="weather-soil-moisture">
+        <span class="menu-link">Settings</span>
+        <span class="arrow">&#9658;</span>
+      </div>
+    </div>
+  <div class="container">
+    <h2>Thresholds</h2>
+    <div id="weatherData"></div>
+    <div id="weatherForm">
+      <form>
+        <div class="mb-3">
+          <label for="highTemp" class="form-label">High Temperature:</label>
+          <input type="number" class="form-control" id="highTemp" placeholder="Enter High Temperature" min="0" step="any" required>
+        </div>
+        <div class="mb-3">
+          <label for="lowTemp" class="form-label">Low Temperature:</label>
+          <input type="number" class="form-control" id="lowTemp" placeholder="Enter Low Temperature" min="0" step="any" required>
+        </div>
+        <div class="mb-3">
+          <label for="highSoilMoisture" class="form-label">High Soil Moisture:</label>
+          <input type="number" class="form-control" id="highSoilMoisture" placeholder="Enter High Soil Moisture" min="0" step="any" required>
+        </div>
+        <div class="mb-3">
+          <label for="lowSoilMoisture" class="form-label">Low Soil Moisture:</label>
+          <input type="number" class="form-control" id="lowSoilMoisture" placeholder="Enter Low Soil Moisture" min="0" step="any" required>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="submitData()">Submit</button>
+        <div id="errorMessage" class="error-message"></div>
+      </form>
+    </div>
+    </div>
+    <div id="warnings"></div>
+
+  <script>
+    const host = "http://127.0.0.1:5000/"
+    async function fetchAndDisplayWarnings() {
+    try {
+        const response = await fetch(host + "issues");
+        const data = await response.json();
+        const warningsContainer = document.getElementById("warnings");
+        warningsContainer.innerHTML = "";
+
+        if (typeof data === 'object' && data !== null) {
+            const entryDiv = document.createElement("div");
+            const timestampSpan = document.createElement("span");
+
+            // Extracting the time part from the timestamp
+            const time = data.Timestamp.split(' ')[1]; // Splitting timestamp at space, taking the second part
+
+            timestampSpan.textContent = "Time: " + time; // Displaying only the time
+            entryDiv.appendChild(timestampSpan);
+            entryDiv.appendChild(document.createElement("br")); 
+            const warningsList = document.createElement("ul");
+            for (let i = 0; i < Math.min(4, data.Warnings.length); i++) {
+                const warningItem = document.createElement("li");
+                warningItem.textContent = data.Warnings[i];
+                warningsList.appendChild(warningItem);
+            }
+            entryDiv.appendChild(warningsList);
+
+            warningsContainer.appendChild(entryDiv);
+        } else {
+            console.error("Invalid data format:", data);
+        }
+    } catch (error) {
+        console.error("Error fetching warnings:", error);
+    }
+}
+
+fetchAndDisplayWarnings();
+setInterval(fetchAndDisplayWarnings, 30000);
+    function fetchData() {
+      fetch(host + 'config')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('highTemp').value = data.max_temperature;
+          document.getElementById('lowTemp').value = data.min_temperature;
+          document.getElementById('highSoilMoisture').value = data.max_moisture;
+          document.getElementById('lowSoilMoisture').value = data.min_moisture;
+          ;
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    }
+    function submitData() {
+  var highTemp = parseFloat(document.getElementById("highTemp").value);
+  var lowTemp = parseFloat(document.getElementById("lowTemp").value);
+  var highSoilMoisture = parseFloat(document.getElementById("highSoilMoisture").value);
+  var lowSoilMoisture = parseFloat(document.getElementById("lowSoilMoisture").value);
+
+  if (!highTemp || !lowTemp || !highSoilMoisture || !lowSoilMoisture) {
+    document.getElementById("errorMessage").innerText = "Kindly input values into all fields";
+    return;
+  }
+  if (isNaN(highTemp) || isNaN(lowTemp) || isNaN(highSoilMoisture) || isNaN(lowSoilMoisture)) {
+    document.getElementById("errorMessage").innerText = "Please enter valid numerical values for all fields.";
+    return;
+  }
+
+  if (highTemp <= lowTemp || highSoilMoisture <= lowSoilMoisture) {
+    document.getElementById("errorMessage").innerText = "The high value needs to exceed the low value for both temperature and soil moisture.";
+    return;
+  }
+
+  var payload = {
+    "max_temperature": highTemp,
+    "min_temperature": lowTemp,
+    "max_moisture": highSoilMoisture,
+    "min_moisture": lowSoilMoisture
+  };
+  const host = "http://127.0.0.1:5000/";
+  fetch(host + 'config', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    location.reload();
+  })
+  .catch(error => {
+    console.error('Error sending data:', error);
+  });
+}
+
+    window.onload = function() {
+      fetchData();
+    };
+    function openMenuPage1() {
+      window.open("menu.html", "_self"); 
+    }
+    function openMenuPage2() {
+      window.open("crophealth.html", "_self"); 
+    }
+    function openMenuPage4() {
+      window.open("historicaldata.html", "_self");
+    }
+    function openMenuPage3() {
+      window.open("trackerid.html", "_self");
+    }
+  </script>
+</body>
+</html>

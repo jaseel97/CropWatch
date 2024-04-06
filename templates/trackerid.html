@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tracker Assignment</title>
+  <link rel="stylesheet" href="../templates/bootstrap/css/bootstrap.min.css">
+  <script src="../templates/jquerymin.js"></script>
+  <script src="../templates/bootstrap/js/bootstrap.min.js"></script> 
+  <style>
+    body {
+      font-family: Times New Roman, system-ui;
+      display: flex;
+    }
+    #side-nav {
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    #side-nav {
+            background-color: #f4f4f4;
+            padding: 20px;
+            width: 250px;
+        }
+        .container {
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            max-width: 100%;
+        }
+    .image {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .image img {
+      width: 250px;
+      display: block;
+    }
+    .image-name {
+      margin-top: 10px;
+    }
+    .crop-percentages {
+      font-size: 14px;
+      color: #666;
+    }
+    .menu-item {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      transition: background-color 0.3s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .menu-item:hover {
+      background-color: #ddd;
+    }
+
+    .menu-link {
+      color: #333;
+      text-decoration: none;
+      font-size: 16px;
+    }
+    .menu-link:hover {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .active {
+      background-color: #7c9cf1;
+      color: #fff;
+    }
+
+    .arrow {
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+      color: #7c9cf1;
+    }
+    .menu-item.active .arrow {
+      display: block;
+    }
+    table.table.mt-3 {
+      text-align: center;
+    }
+    #warnings {
+      position: fixed;
+      bottom: 0px;
+      background-color: cadetblue;
+      color: #fff;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #warnings ul {
+     padding: 0;
+    }
+    #warnings li {
+      list-style-type: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="side-nav">
+    <div class="menu-item" id="employee-tracking" onclick="openMenuPage1()">
+      <span class="menu-link">Employee Location</span>
+      <span class="arrow">&#9658;</span>
+    </div>
+    <div class="menu-item" id="crop-tracking" onclick="openMenuPage2()">
+      <span class="menu-link">Crop Health Analysis</span>
+      <span class="arrow">&#9658;</span>
+    </div>
+    <div class="menu-item" id="historical-data" onclick="openMenuPage4()">
+      <span class="menu-link">Historical Data</span>
+      <span class="arrow">&#9658;</span>
+    </div>
+    <div class="menu-item active" id="tracker-assignment">
+      <span class="menu-link">Tracker Assignment</span>
+      <span class="arrow">&#9658;</span>
+    </div>
+    <div class="menu-item " id="weather-soil-moisture" onclick="openMenuPage5()">
+      <span class="menu-link">Settings</span>
+      <span class="arrow">&#9658;</span>
+    </div>
+  </div>
+  <div class="container">
+    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addTrackerModal">
+      Add Tracker
+    </button>
+    <table class="table mt-3">
+      <thead>
+        <tr>
+          <th>Tracker ID</th>
+          <th>Assigned Employee</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="trackerTableBody">
+      </tbody>
+    </table>
+  </div>
+  <div class="modal fade" id="addTrackerModal" tabindex="-1" role="dialog" aria-labelledby="addTrackerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <header class="modal-header">
+          <h5 class="modal-title" id="addTrackerModalLabel">Add Tracker</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </header>
+        <div class="modal-body">
+          <form id="addTrackerForm">
+            <fieldset class="form-group">
+              <legend>Tracker Details</legend>
+              <div class="form-group">
+                <label for="addTrackerIdInput">Tracker ID:</label>
+                <input type="text" class="form-control" id="addTrackerIdInput" required>
+              </div>
+              <div class="form-group">
+                <label for="addEmployeeNameInput">Employee Name:</label>
+                <input type="text" class="form-control" id="addEmployeeNameInput" required>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveAddTrackerButton">Save changes</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+  <div id="warnings"></div>
+  <div class="modal fade" id="updateTrackerModal" tabindex="-1" role="dialog" aria-labelledby="updateTrackerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <header class="modal-header">
+          <h5 class="modal-title" id="updateTrackerModalLabel">Update Tracker</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </header>
+        <div class="modal-body">
+          <form id="updateTrackerForm">
+            <fieldset class="form-group">
+              <legend>Tracker Details</legend>
+              <div class="form-group">
+                <label for="updateTrackerIdInput">Tracker ID:</label>
+                <input type="text" class="form-control" id="updateTrackerIdInput" required disabled>
+              </div>
+              <div class="form-group">
+                <label for="updateEmployeeNameInput">Employee Name:</label>
+                <input type="text" class="form-control" id="updateEmployeeNameInput" required>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveUpdateTrackerButton">Save changes</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+  
+
+  <script>
+   // const host = "http://192.168.2.14:5000/"
+   const host = "http://127.0.0.1:5000/"
+   async function fetchAndDisplayWarnings() {
+    try {
+        const response = await fetch(host + "issues");
+        const data = await response.json();
+        const warningsContainer = document.getElementById("warnings");
+        warningsContainer.innerHTML = "";
+
+        if (typeof data === 'object' && data !== null) {
+            const entryDiv = document.createElement("div");
+            const timestampSpan = document.createElement("span");
+
+            // Extracting the time part from the timestamp
+            const time = data.Timestamp.split(' ')[1]; // Splitting timestamp at space, taking the second part
+
+            timestampSpan.textContent = "Time: " + time; // Displaying only the time
+            entryDiv.appendChild(timestampSpan);
+            entryDiv.appendChild(document.createElement("br")); 
+            const warningsList = document.createElement("ul");
+            for (let i = 0; i < Math.min(4, data.Warnings.length); i++) {
+                const warningItem = document.createElement("li");
+                warningItem.textContent = data.Warnings[i];
+                warningsList.appendChild(warningItem);
+            }
+            entryDiv.appendChild(warningsList);
+
+            warningsContainer.appendChild(entryDiv);
+        } else {
+            console.error("Invalid data format:", data);
+        }
+    } catch (error) {
+        console.error("Error fetching warnings:", error);
+    }
+}
+
+fetchAndDisplayWarnings();
+setInterval(fetchAndDisplayWarnings, 30000);
+
+
+    var trackers = []; 
+    function populateTable() {
+      var tableBody = $("#trackerTableBody");
+      tableBody.empty(); 
+      trackers.forEach(function(tracker) {
+        var row = $("<tr>").append(
+          $("<td>").text(tracker.id),
+          $("<td>").text(tracker.employee),
+          $("<td>").append(
+            $("<button>").addClass("btn btn-primary").text("Update").click(function() {
+              openUpdateTrackerModal(tracker.id, tracker.employee);
+            }),
+            $("<button>").addClass("btn btn-danger mr-2").text("Delete").click(function() {
+              deleteTracker(tracker.id);
+            })
+          )
+        );
+        tableBody.append(row);
+      });
+    }
+
+    function fetchTrackerData() {
+      $.ajax({
+        url: host+"trackers",
+        type: "GET",
+        success: function(response) {
+          trackers = response.map(function(entry) {
+            return { id: entry[0], employee: entry[1] };
+          });
+          populateTable(); 
+        },
+        error: function(xhr, status, error) {
+          console.error("Error fetching tracker data:", error);
+        }
+      });
+    }
+
+    $(document).ready(function() {
+      fetchTrackerData();
+    });
+    $("#saveAddTrackerButton").click(function() {
+      var trackerIdInput = $("#addTrackerIdInput").val();
+      var employeeNameInput = $("#addEmployeeNameInput").val();
+      addTracker(trackerIdInput, employeeNameInput);
+      $("#addTrackerIdInput").val("");
+      $("#addEmployeeNameInput").val("");
+      $("#addTrackerModal").modal("hide");
+    });
+
+    function addTracker(trackerId, employeeName) {
+      $.ajax({
+        url: host+"trackers",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({ id: trackerId, employee: employeeName }),
+        success: function(response) {
+          console.log("Tracker added successfully.");
+          fetchTrackerData();
+        },
+        error: function(xhr, status, error) {
+          console.error("Error adding tracker:", error);
+        }
+      });
+    }
+    function deleteTracker(trackerId) {
+      $.ajax({
+        url: host+"trackers?id=" + trackerId,
+        type: "DELETE",
+        success: function(response) {
+          console.log("Tracker deleted successfully.");
+          fetchTrackerData();
+        },
+        error: function(xhr, status, error) {
+          console.error("Error deleting tracker:", error);
+        }
+      });
+    }
+    function openUpdateTrackerModal(trackerId, employeeName) {
+      $("#updateTrackerIdInput").val(trackerId);
+      $("#updateEmployeeNameInput").val(employeeName);
+      $("#updateTrackerModal").modal("show");
+    }
+    $("#saveUpdateTrackerButton").click(function() {
+      var trackerIdInput = $("#updateTrackerIdInput").val();
+      var employeeNameInput = $("#updateEmployeeNameInput").val();
+      updateTracker(trackerIdInput, employeeNameInput);
+      $("#updateTrackerIdInput").val("");
+      $("#updateEmployeeNameInput").val("");
+      $("#updateTrackerModal").modal("hide");
+    });
+
+    function updateTracker(trackerId, employeeName) {
+      $.ajax({
+        url: host+"trackers?id=" + trackerId,
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({ id: trackerId, employee: employeeName }),
+        success: function(response) {
+          console.log("Tracker updated successfully.");
+          fetchTrackerData();
+        },
+        error: function(xhr, status, error) {
+          console.error("Error updating tracker:", error);
+        }
+      });
+    }
+    function openMenuPage1() {
+      window.open("menu.html", "_self"); 
+    }
+    function openMenuPage2() {
+      window.open("crophealth.html", "_self"); 
+    }
+    function openMenuPage4() {
+      window.open("historicaldata.html", "_self");
+    }
+    function openMenuPage5() {
+      window.open("settings.html", "_self");
+    }
+  </script>
+</body>
+</html>

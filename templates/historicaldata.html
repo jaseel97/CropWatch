@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Data</title>
+    <link href="../templates/bootstrap/css/bootstrap.min.css" rel="stylesheet"> 
+    <style>
+       body {
+      font-family: Times New Roman, system-ui;
+      display: flex;
+    }
+    #side-nav {
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    #side-nav {
+            background-color: #f4f4f4;
+            padding: 20px;
+            width: 250px;
+        }
+        .container {
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            max-width: 100%;
+        }
+        .menu-item {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+        .menu-item:hover {
+            background-color: #ddd;
+        }
+        .menu-link {
+            color: #333;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .menu-link:hover {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .active {
+            background-color: #7c9cf1;
+            color: #fff;
+        }
+        .arrow {
+            position: absolute;
+            right: -13px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: none;
+            color: #7c9cf1;
+        }
+        .menu-item.active .arrow {
+            display: block;
+        }
+        #warnings {
+      position: fixed;
+      bottom: 0px;
+      background-color:cadetblue;
+      color: #fff;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #warnings ul {
+     padding: 0;
+    }
+    #warnings li {
+      list-style-type: none;
+    }
+    .form-row {
+    display: flex;
+}
+button.btn.btn-primary {
+    top: 20px;
+    position: relative;
+    left: 0px;
+}
+    </style>
+    <script src="chart.js"></script>
+</head>
+<body>
+    <div id="side-nav">
+        <div class="menu-item" id="employee-tracking" onclick="openMenuPage1()">
+            <span class="menu-link">Employee Location</span>
+            <span class="arrow">&#9658;</span>
+        </div>
+        <div class="menu-item" id="crop-tracking" onclick="openMenuPage2()">
+            <span class="menu-link">Crop Health Analysis</span>
+            <span class="arrow">&#9658;</span>
+        </div>
+        <div class="menu-item active" id="historical-data">
+            <span class="menu-link">Historical Data</span>
+            <span class="arrow">&#9658;</span>
+        </div>
+        <div class="menu-item" id="tracker-assignment" onclick="openMenuPage3()">
+            <span class="menu-link">Tracker Assignment</span>
+            <span class="arrow">&#9658;</span>
+        </div>
+        <div class="menu-item " id="weather-soil-moisture" onclick="openMenuPage5()">
+            <span class="menu-link">Settings</span>
+            <span class="arrow">&#9658;</span>
+          </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <form id="dateForm">
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label for="startDate">Start Date:</label>
+                            <input type="date" class="form-control" id="startDate" name="startDate">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="endDate">End Date:</label>
+                            <input type="date" class="form-control" id="endDate" name="endDate">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="cadence">Cadence:</label>
+                            <select class="form-control" id="cadence" name="cadence">
+                                <option value="hour">hour</option>
+                                <option value="day">day</option>
+                                <option value="week">week</option>
+                                <option value="month">month</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="zone">Zone:</label>
+                            <select class="form-control" id="zone" name="zone">
+                                <!-- Options will be dynamically populated here -->
+                            </select>
+                    </div>
+                </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div style="width: 100%;">
+                    <canvas id="moistureChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div style="width: 100%;">
+                    <canvas id="temperatureChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="warnings"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="jquerymin.js"></script>
+    <script src="popper.min.js"></script> 
+    <script>
+        //const host = "http://192.168.2.14:5000/"
+        const host = "http://127.0.0.1:5000/"
+        fetch(host + 'zones')
+    .then(response => response.json())
+    .then(data => {
+        const select = document.getElementById('zone');
+
+        // Clear existing options
+        select.innerHTML = '';
+
+        // Add options from API response
+        data.forEach(zone => {
+            const option = document.createElement('option');
+            option.value = zone;
+            option.textContent = zone;
+            select.appendChild(option);
+        });
+    })
+        
+    async function fetchAndDisplayWarnings() {
+    try {
+        const response = await fetch(host + "issues");
+        const data = await response.json();
+        const warningsContainer = document.getElementById("warnings");
+        warningsContainer.innerHTML = "";
+
+        if (typeof data === 'object' && data !== null) {
+            const entryDiv = document.createElement("div");
+            const timestampSpan = document.createElement("span");
+
+            // Extracting the time part from the timestamp
+            const time = data.Timestamp.split(' ')[1]; // Splitting timestamp at space, taking the second part
+
+            timestampSpan.textContent = "Time: " + time; // Displaying only the time
+            entryDiv.appendChild(timestampSpan);
+            entryDiv.appendChild(document.createElement("br")); 
+            const warningsList = document.createElement("ul");
+            for (let i = 0; i < Math.min(4, data.Warnings.length); i++) {
+                const warningItem = document.createElement("li");
+                warningItem.textContent = data.Warnings[i];
+                warningsList.appendChild(warningItem);
+            }
+            entryDiv.appendChild(warningsList);
+
+            warningsContainer.appendChild(entryDiv);
+        } else {
+            console.error("Invalid data format:", data);
+        }
+    } catch (error) {
+        console.error("Error fetching warnings:", error);
+    }
+}
+
+fetchAndDisplayWarnings();
+setInterval(fetchAndDisplayWarnings, 30000);
+        // Function to extract x and y values from data
+        const extractData = (dataset) => {
+            return dataset.map(entry => ({
+                x: entry[0],
+                y: parseFloat(entry[1])
+            }));
+        };
+
+        // jQuery function to handle form submission
+        $(document).ready(function () {
+            let moistureChartInstance;
+            let temperatureChartInstance;
+
+            $('#dateForm').submit(function (e) {
+                e.preventDefault(); // Prevent the default form submission
+
+                // Destroy existing chart instances if they exist
+                if (moistureChartInstance) {
+                    moistureChartInstance.destroy();
+                }
+                if (temperatureChartInstance) {
+                    temperatureChartInstance.destroy();
+                }
+
+                // Retrieve form values
+                var startDate = $('#startDate').val();
+                var endDate = $('#endDate').val();
+                var cadence = $('#cadence').val();
+                var zone = $('#zone').val();
+
+                // Construct API URL with parameters
+                var apiUrl = host+`historic?startDate=${startDate}&endDate=${endDate}&cadence=${cadence}&zone=${zone}`;
+
+                // Display results
+                $('#resultContainer').html(`
+                    <p><strong>Start Date:</strong> ${startDate}</p>
+                    <p><strong>End Date:</strong> ${endDate}</p>
+                    <p><strong>Cadence:</strong> ${cadence}</p>
+                    <p><strong>Zone:</strong> ${zone}</p>
+                `);
+                $('.result-container').slideDown(); // Show the results container
+
+                // Fetch data from API
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Plot charts based on fetched data
+                        const moistureData = {
+                            labels: data.moisture.avg.map(entry => entry[0]),
+                            datasets: [
+                                {
+                                    label: 'Soil Moisture - Avg',
+                                    data: extractData(data.moisture.avg),
+                                    borderColor: 'blue',
+                                    fill: false
+                                },
+                                {
+                                    label: 'Soil Moisture - Max',
+                                    data: extractData(data.moisture.max),
+                                    borderColor: 'green',
+                                    fill: false
+                                },
+                                {
+                                    label: 'Soil Moisture - Min',
+                                    data: extractData(data.moisture.min),
+                                    borderColor: 'red',
+                                    fill: false
+                                }
+                            ]
+                        };
+
+                        const temperatureData = {
+                            labels: data.temperature.avg.map(entry => entry[0]),
+                            datasets: [
+                                {
+                                    label: 'Temperature - Avg',
+                                    data: extractData(data.temperature.avg),
+                                    borderColor: 'blue',
+                                    fill: false
+                                },
+                                {
+                                    label: 'Temperature - Max',
+                                    data: extractData(data.temperature.max),
+                                    borderColor: 'green',
+                                    fill: false
+                                },
+                                {
+                                    label: 'Temperature - Min',
+                                    data: extractData(data.temperature.min),
+                                    borderColor: 'red',
+                                    fill: false
+                                }
+                            ]
+                        };
+
+                        const options = {
+                            scales: {
+                                xAxes: [{
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: 'Day'
+                                    }
+                                }],
+                                yAxes: [{
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: 'Value'
+                                    }
+                                }]
+                            }
+                        };
+
+                        // Create moisture chart
+                        const moistureCtx = document.getElementById('moistureChart').getContext('2d');
+                        moistureChartInstance = new Chart(moistureCtx, {
+                            type: 'line',
+                            data: moistureData,
+                            options: options
+                        });
+
+                        // Create temperature chart
+                        const temperatureCtx = document.getElementById('temperatureChart').getContext('2d');
+                        temperatureChartInstance = new Chart(temperatureCtx, {
+                            type: 'line',
+                            data: temperatureData,
+                            options: options
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching data:', error);
+                    });
+            });
+        });
+
+        // Functions for navigating to different pages
+        function openMenuPage1() {
+            window.open("menu.html", "_self");
+        }
+        function openMenuPage2() {
+            window.open("crophealth.html", "_self");
+        }
+        function openMenuPage3() {
+            window.open("trackerid.html", "_self");
+        }
+        function openMenuPage5() {
+      window.open("settings.html", "_self");
+    }
+    </script>
+</body>
+</html>
