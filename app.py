@@ -13,9 +13,6 @@ from tracker_service import create_tracker, delete_tracker, get_coordinates, get
 from psycopg2.extras import LoggingConnection
 
 logging.basicConfig(level=logging.DEBUG)
-# logger = logging.getLogger('loggerinformation')
-# db_conn = create_connection()
-# db_conn.initialize(logger)
 config = get_config()
 
 db_conn = create_sqlite_connection()
@@ -40,7 +37,6 @@ def analyze_images_route():
             for result in executor.map(calculate_crop_percentage, image_paths):
                 results.append(result)
         response = jsonify(results)
-        # response.headers.add('Access-Control-Allow-Origin', '*')
         return response
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -50,7 +46,6 @@ def analyze_images_route():
 def get_coordinates_route():
     coordinates = get_coordinates(db_conn)
     response = jsonify(coordinates)
-    # response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 @app.route('/historic', methods=['GET'])
@@ -60,12 +55,9 @@ def get_coordinates_by_window():
     end_date   = request.args.get('endDate')#"2024-03-31"
     cadence    = request.args.get('cadence')#"hour"
     zone       = request.args.get('zone')#"1"
-    # print(start_date,end_date,cadence,zone)
 
     data = get_historic_data(db_conn, start_date, end_date, cadence, zone)
     response = jsonify(data)
-    # response.headers.add('Access-Control-Allow-Origin', '*')
-
     return response
 
 @app.route('/issues', methods=['GET'])
@@ -73,7 +65,6 @@ def get_coordinates_by_window():
 def get_issues_route():
     data = get_issues()
     response = jsonify(data)
-    # response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 
@@ -95,7 +86,6 @@ def trackers_route():
         return jsonify({'error': "something went wrong"}), 500
 
     response = jsonify(res)
-    # response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 @app.route('/zones',methods=['GET'])
@@ -140,8 +130,7 @@ def update_config():
             "max_moisture":config['max_moisture'],
             "min_moisture":config['min_moisture']
         })
-    # print(config)
-    
+
 
 # Logout endpoint (not really necessary for JWT)
 @app.route('/logout', methods=['POST'])
@@ -170,7 +159,6 @@ def settings():
    return render_template("settings.html")
 
 if __name__ == '__main__':
-    # app.run( debug=False, host = '0.0.0.0')
     config = get_config()
     from waitress import serve
     serve(app, host="0.0.0.0", port=5000)
