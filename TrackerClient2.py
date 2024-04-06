@@ -7,7 +7,7 @@ from nanoid import generate
 import serial
 
 tracker_id = 2
-COM_PORT = 'COM2'  
+COM_PORT = 'COM2' 
 BAUD_RATE = 9600
 global ser
 
@@ -53,36 +53,3 @@ async def send_message():
             await asyncio.sleep(30)
 
 asyncio.run(send_message())
-
-# async def send_message():
-#     uri = "ws://localhost:8765"
-#     async with websockets.connect(uri) as websocket:
-#         while True:
-#             try :
-#                 coordinates = get_gps_data(ser)
-#                 if coordinates is not None:
-#                     # print(coordinates)
-#                     # message = [tracker_id, round(random.uniform(0,100), 4), round(random.uniform(0,100), 4)]
-#                     message = [tracker_id, coordinates['latitude'], coordinates['longitude']]
-#                     await websocket.send(json.dumps(message))
-#                     print(f"Sent: {message}")
-#             except:
-#                 print("error pinging coordinates")
-#             finally:
-#                 await asyncio.sleep(10)
-
-# asyncio.run(send_message())
-
-
-# def read_tracker_id():
-#     file_name = 'id.txt'
-#     if os.path.exists(file_name):
-#         with open(file_name, 'r') as file:
-#             tracker_id = file.readline().strip()
-#     else:
-#         tracker_id = generate()
-#         with open(file_name, 'w') as file:
-#             file.write(tracker_id)
-#     return tracker_id
-
-# tracker_id = read_tracker_id()

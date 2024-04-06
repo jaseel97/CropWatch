@@ -4,47 +4,6 @@ from config import get_config
 
 config = get_config()
 
-# def get_trackers(conn):
-#     cursor = conn.cursor()
-#     cursor.execute('''
-#     SELECT * FROM trackers
-#     ''')
-#     trackers = []
-#     for row in cursor:
-#         trackers.append([row[0],row[1]])
-
-#     return trackers
-
-# def create_tracker(conn,tracker_id,assigned_to):
-#     print(tracker_id,assigned_to)
-#     query = '''
-#         INSERT INTO trackers (id, assigned_to)
-#         VALUES (%d, '%s')
-#         ON CONFLICT (id)
-#         DO UPDATE SET assigned_to = EXCLUDED.assigned_to'''%(tracker_id,assigned_to)
-#     try:
-#         cursor = conn.cursor()
-#         cursor.execute(query)
-#         conn.commit()
-#         print("Updated tracker")
-#     except:
-#         print("Error upserting tracker")
-#         return False
-#     return True
-
-# def delete_tracker(conn,tracker_id):
-#     query = '''
-#         DELETE FROM trackers WHERE id=%d
-#     '''%(tracker_id)
-#     try:
-#         cursor = conn.cursor()
-#         cursor.execute(query)
-#         conn.commit()
-#     except:
-#         print("Error deleting tracker")
-#         return False
-#     return True
-
 def lat_lon_to_pixel(latitude, longitude):
     map_width = config["map_width"]
     map_height = config["map_height"]
@@ -64,34 +23,6 @@ def lat_lon_to_pixel(latitude, longitude):
 
     return int(x_pixel), int(y_pixel)
 
-# def get_coordinates(conn):
-#     coordinates = {}
-#     cursor = conn.cursor()
-#     cursor.execute('''
-#     WITH RecentLocations AS (
-#     SELECT
-#         tracker_id,
-#         latitude,
-#         longitude,
-#         created_at,
-#         ROW_NUMBER() OVER (PARTITION BY tracker_id ORDER BY created_at DESC) AS rn
-#     FROM location
-#     WHERE EXTRACT(EPOCH FROM (now() - created_at)) < 1800
-#     )
-#     SELECT t.assigned_to, rl.latitude, rl.longitude
-#     FROM RecentLocations as rl
-#     JOIN trackers as t ON t.id = rl.tracker_id
-#     WHERE rn = 1;
-#     ''')
-
-#     for row in cursor:
-#         x,y = lat_lon_to_pixel(row[1],row[2])
-#         coordinates[row[0]] = {"x":x,"y":y}
-
-#     return coordinates
-
-
-# ##############################################################
 def get_trackers(conn):
     try:
         cursor = conn.cursor()
@@ -150,7 +81,6 @@ def get_coordinates(conn):
         ''')
 
         for row in cursor:
-            # Assuming `lat_lon_to_pixel` is a function defined elsewhere
             x, y = lat_lon_to_pixel(row[1], row[2])
             coordinates[row[0]] = {"x": x, "y": y}
 

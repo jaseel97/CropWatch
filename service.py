@@ -57,50 +57,6 @@ def get_zones(conn):
         print("Error fetching trackers:", e)
         return []
 
-# def get_historic_data(conn, start_date, end_date, cadence, zone_id):
-#     start_date = datetime.strptime(start_date, "%Y-%m-%d")
-#     end_date = datetime.strptime(end_date, "%Y-%m-%d")
-#     cursor = conn.cursor()
-#     query = '''
-#     WITH allData AS (
-#         SELECT
-#             metric_name,
-#             metric_value,
-#             DATE_TRUNC(%s,created_at) as twindow
-#         FROM zone_metrics
-#         WHERE
-#             zone_id = %s
-#             AND created_at >= %s
-#             AND created_at < %s
-#     )
-#     SELECT
-#         twindow,
-#         metric_name,
-#         min(metric_value),
-#         avg(metric_value),
-#         max(metric_value)
-#     FROM
-#         allData
-#     GROUP BY
-#         metric_name,twindow
-#     '''
-#     print([cadence,zone_id,start_date,end_date])
-#     cursor.execute(query, (cadence,zone_id,start_date,end_date))
-#     data = {"temperature":{"avg":[],"min":[],"max":[]},"moisture":{"avg":[],"min":[],"max":[]}}
-#     for row in cursor:
-#         label = ""
-#         metric_value = row[1]
-#         if cadence == 'hour':
-#             label = str(row[0])
-#         else:
-#             label = row[0].day
-
-#         data[metric_value]["min"].append([label,row[2]])
-#         data[metric_value]["avg"].append([label,row[3]])
-#         data[metric_value]["max"].append([label,row[4]])
-#     return data
-###################################################################################
-
 def get_historic_data(conn, start_date, end_date, cadence, zone_id):
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
@@ -126,8 +82,6 @@ def get_historic_data(conn, start_date, end_date, cadence, zone_id):
         AND created_at BETWEEN ? AND ?
     GROUP BY zone_id, metric_name,cadence_start;
     '''
-    # print([cadence,zone_id,start_date,end_date])
-    # cursor.execute(query, (cadence,zone_id,start_date,end_date))
     cursor.execute(query, (zone_id,start_date,end_date))
     data = {"temperature":{"avg":[],"min":[],"max":[]},"moisture":{"avg":[],"min":[],"max":[]}}
     for row in cursor:

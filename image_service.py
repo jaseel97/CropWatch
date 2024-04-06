@@ -19,7 +19,7 @@ def get_images_taken_on_date(directory_path, target_date):
     return image_names
 
 
-directory_path = '/path/to/your/directory'
+directory_path = '/images/'
 target_date = datetime(2024, 4, 5)
 
 images_on_date = get_images_taken_on_date(directory_path, target_date)

@@ -21,7 +21,7 @@ def get_recent_data():
 def detect_issues(data, temp_threshold=2, moisture_threshold=0.5):
     temp_spike = config["temperature_spike"]
     moisture_spike = config["moisture_spike"]
-    # current_time = datetime.now()
+
     current_datetime = datetime.now()
     current_date = current_datetime.date()
     current_time = current_datetime.time()
@@ -30,7 +30,6 @@ def detect_issues(data, temp_threshold=2, moisture_threshold=0.5):
     issues = []
     for zone_id, zone_data in data.groupby('ZoneId'):
         temp_max = zone_data[zone_data['MetricName'] == 'temperature']['MetricValue'].max()
-        # print(temp_max)
         if temp_max > config["max_temperature"]:
             issues.append(f"Zone {zone_id} has high temperature: {temp_max:.2f} C")
 
@@ -69,8 +68,6 @@ def speak_issues():
         for issue in issues:
             text += f"{issue}\n"
             text_to_speech(text, "output.mp3")
-    # else:
-    #     text += "No issues detected.\n"
 
 def get_issues():
     data = get_recent_data()
